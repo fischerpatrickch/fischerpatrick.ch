@@ -585,7 +585,9 @@ function initSymbolField(canvas) {
     // Handy: auf der Startseite stehen die Zeichen still; im geöffneten Projekt wandert
     // eine unsichtbare «Maus» zufällig über das Feld
     if (noHover()) {
-      if (canvas.closest('.bar.is-open') && rect.height > 1) updateWander(rect, performance.now());
+      if (canvas.closest('.bar.is-open') && canvas.closest('.bar__media') && rect.height > 1) {
+        updateWander(rect, performance.now());
+      }
       else { mouse = null; wander.started = false; }
     }
     if (rect.height > 1) {
@@ -634,7 +636,13 @@ function initSymbolField(canvas) {
 
   // Canvas mitwachsen lassen, wenn der Balken grösser/kleiner wird
   new ResizeObserver(resize).observe(canvas);
-  window.addEventListener('resize', () => { build(); resize(); });
+  // nur neu aufbauen, wenn sich die Breite ändert: auf dem Handy ändert sich beim Scrollen
+  // die Höhe (Adressleiste ein/aus) – sonst würden die Zeichen jedes Mal neu gemischt
+  let builtWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth !== builtWidth) { builtWidth = window.innerWidth; build(); }
+    resize();
+  });
 
   build();
   resize();
@@ -810,7 +818,12 @@ function fitTitles() {
     const baseSize = parseFloat(getComputedStyle(document.documentElement).fontSize) *
                      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--font-size'));
     ctx.font = `${style.fontWeight} ${baseSize}px ${style.fontFamily}`;
-    const smallWidth = ctx.measureText(label.textContent.trim()).width;
+    // Handy: Titel mit Umbruch (z. B. «Neue Scheune / Merian Gärten») – die längere Zeile zählt
+    const mLine = label.querySelector('.m-line');
+    const lines = (mLine && window.innerWidth <= MOBILE_MAX)
+      ? [label.textContent.replace(mLine.textContent, ''), mLine.textContent]
+      : [label.textContent];
+    const smallWidth = Math.max(...lines.map((t) => ctx.measureText(t.trim()).width));
     const bigWidth = smallWidth * grow;
     label.style.setProperty('--fit', Math.min(1, maxWidth / bigWidth));
     // Handy: Titel landet links am Rand (16px) – Verschiebung von der Mitte aus
@@ -2118,7 +2131,15 @@ function projectThumb(bar) {
   } else if (src.tagName === 'VIDEO') {
     el = document.createElement('video');
     el.src = src.currentSrc || src.src;
-    prepareGalleryVideo(el);                 // stumm, Loop, spielt nur wenn sichtbar
+    if (noHover()) {
+      // Handy: Vorschau unten steht still (nur Standbild)
+      el.muted = true;
+      el.playsInline = true;
+      el.preload = 'metadata';
+      if (src.poster) el.poster = src.poster;
+    } else {
+      prepareGalleryVideo(el);               // stumm, Loop, spielt nur wenn sichtbar
+    }
   } else {
     el = document.createElement('img');
     el.src = src.currentSrc || src.src;

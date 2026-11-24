@@ -1547,3 +1547,21 @@ html.no-anim .bar__label {
   from { scale: var(--s-small, 0.3); }
   to   { scale: 1; }
 }
+
+/* Handy: «Neue Scheune» / «Merian Gärten» auf zwei Zeilen (überall: Startseite, Titel, Leiste unten) */
+@media (max-width: 700px) {
+  .m-line {
+    display: block;
+  }
+}
+
+/* CV: «(Teilzeit Vorkurs/» bleibt auf einer Zeile; auf dem Handy danach ein Umbruch */
+.nowrap {
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .m-line-cv {
+    display: block;
+  }
+}
