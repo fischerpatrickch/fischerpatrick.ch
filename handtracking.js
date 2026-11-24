@@ -188,6 +188,23 @@
     cam.srcObject = null;
   }
 
+  // kurzer Hinweis in der Mitte: wächst (wie die Titel auf der Startseite), wird wieder
+  // klein und verschwindet
+  function showHint() {
+    const old = document.querySelector('.touch-hint');
+    if (old) old.remove();
+    const hint = document.createElement('div');
+    hint.className = 'touch-hint';
+    hint.textContent = 'Show your hands to the camera';
+    document.body.appendChild(hint);
+    hint.addEventListener('animationend', () => hint.remove());
+  }
+
+  function hideHint() {
+    const hint = document.querySelector('.touch-hint');
+    if (hint) hint.remove();
+  }
+
   function startLoop() {
     if (running) return;
     running = true;
@@ -211,6 +228,7 @@
     hands = [];
     window.refreshLightbox && window.refreshLightbox();   // auf Spul-Version wechseln
     lbVideo.pause();
+    showHint();
     startLoop();
   }
 
@@ -246,6 +264,8 @@
         video.addEventListener('loadedmetadata', () => { video.currentTime = 0; }, { once: true });
         video.src = video.dataset.scrub;
       }
+      target.controls = video.controls;
+      video.controls = false;          // Steuerleiste ausblenden, solange die Kamera läuft
       video.loop = false;
       video.pause();
       return target;
@@ -256,13 +276,15 @@
     button.textContent = 'Stop';
     button.classList.add('is-active');
     hands = [];
+    showHint();
     startLoop();
   }
 
   function stopGrid() {
     if (!grid) return;
-    grid.targets.forEach(({ video, original }) => {
+    grid.targets.forEach(({ video, original, controls }) => {
       if (video.src !== original) video.src = original;
+      video.controls = controls;       // Steuerleiste wieder zeigen
       video.loop = true;
       video.play().catch(() => {});
     });
@@ -279,6 +301,7 @@
     mode = null;
     state.active = false;
     hands = [];
+    hideHint();
     stopCamera();
   }
 

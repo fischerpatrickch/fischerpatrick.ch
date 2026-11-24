@@ -218,7 +218,10 @@ let touchVel = 0;               // px pro Frame (für den Schwung)
 let touchLastT = 0;
 let momentumRaf = 0;
 
+let touchOnModel = false;        // Finger bedient ein 3D-Modell → Seite scrollt nicht mit
+
 window.addEventListener('touchstart', (e) => {
+  touchOnModel = !!(e.target.closest && e.target.closest('.model3d'));
   touchStartY = e.touches[0].clientY;
   touchVel = 0;
   touchLastT = performance.now();
@@ -237,6 +240,7 @@ window.addEventListener('touchmove', (e) => {
   const y = e.touches[0].clientY;
   const delta = touchStartY - y;
   touchStartY = y;
+  if (touchOnModel) { touchVel = 0; return; }   // Drehen/Zoomen am 3D-Modell: Seite bleibt stehen
 
   // Handy: langer CV scrollt in sich selbst (normales Scrollen), erst ganz oben schliesst ein
   // Wisch nach unten die Seite
@@ -949,7 +953,7 @@ const PAGE_CONTENT = {
         text: 'The project was created for a group exhibition at Bollag Atelier in Basel, supervised by ' +
           'Martin Fuchs. A fixed camera captures its surroundings and transforms this input into ' +
           'negative space within the installation.',
-        credits: 'Untitled\n(2025), Video Triptych,\n1920×1080, JavaScript/p5.js\n\n' +
+        credits: 'x·-1\n(2025), Video Triptych,\n1920×1080, JavaScript/p5.js\n\n' +
           'Student Project\nFHNW HGK Basel\nLecturer Martin Fuchs',
       }],
     },
@@ -1540,13 +1544,29 @@ function openSketch(name) {
   loadScript('vendor/p5/p5.min.js').then(() => {
     if (!sketchOverlay || sketchOverlay.overlay !== overlay) return;   // schon wieder zu
     sketchOverlay.instance = new window.p5(SKETCHES[name], overlay);
+    showCameraHint();                                              // kurzer Hinweis zur Kamera
   });
+}
+
+// kurzer Hinweis in der Mitte (wie bei «Touch me»): wächst, wird wieder klein, verschwindet
+function showCameraHint() {
+  hideCameraHint();
+  const hint = document.createElement('div');
+  hint.className = 'touch-hint';
+  hint.textContent = 'Show your hands to the camera';
+  document.body.appendChild(hint);
+  hint.addEventListener('animationend', () => hint.remove());
+}
+
+function hideCameraHint() {
+  document.querySelectorAll('.touch-hint').forEach((el) => el.remove());
 }
 
 function closeSketch() {
   if (!sketchOverlay) return;
   const { overlay, instance } = sketchOverlay;
   sketchOverlay = null;
+  hideCameraHint();
   if (instance) {
     const stream = instance.capture && instance.capture.elt && instance.capture.elt.srcObject;
     if (stream) stream.getTracks().forEach((t) => t.stop());          // Kamera aus
