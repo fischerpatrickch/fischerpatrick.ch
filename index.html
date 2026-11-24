@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fischerpatrick.ch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Ladebildschirm: fischerpatrick.ch, im Punkt laufen Ausschnitte aus den Projekten -->
+  <div class="loader" aria-hidden="true">
+    <p class="loader__name">fischerpatrick<span class="name-dot"></span>ch</p>
+  </div>
+
+  <!-- Test: «accordion--grid» = Projekte in 2 Spalten. Klasse entfernen = wieder 8 Balken untereinander -->
+  <main class="accordion accordion--grid">
+
+    <!-- Balken 1: Name, öffnet die Kontaktseite -->
+    <header class="bar bar--title" data-folder="fischerpatrick.ch">
+      <div class="bar__page"></div>
+      <!-- Kontakt: erscheint zentriert, wenn die Seite geöffnet ist -->
+      <!-- Reiter oben in den Spalten 2–4 (Spalte 1 = Name) -->
+      <nav class="tabs">
+        <button class="tab" type="button" data-tab="about">About</button>
+        <button class="tab" type="button" data-tab="cv">CV</button>
+        <button class="tab" type="button" data-tab="contact">Contact</button>
+      </nav>
+
+      <!-- Inhalte der Reiter -->
+      <div class="tab-panel tab-panel--text" data-panel="about">
+        <p>27 years old, lives and works in Basel. Since September 2024, he has been studying Visual Communication with a focus on Digital Spaces at the FHNW Academy of Art and Design in Basel. His work combines traditional design techniques with new digital processes, exploring ways to connect the two fields.</p>
+      </div>
+      <!-- CV: Jahr in Spalte 1, Eintrag in Spalten 2–4 -->
+      <div class="tab-panel cv" data-panel="cv">
+        <div class="cv__row">
+          <span class="cv__year">2024<span class="dash">–</span>2027</span>
+          <span class="cv__text">Bachelor in Visual Communication &amp; Digital Spaces<br>Hochschule für Gestaltung und Kunst FHNW</span>
+        </div>
+        <div class="cv__row">
+          <span class="cv__year">2025<span class="dash">–</span>Today</span>
+          <span class="cv__text">Host, Visitor Service<br>Kunsthalle Basel</span>
+        </div>
+         <div class="cv__row">
+          <span class="cv__year">2025</span>
+          <span class="cv__text">Social Media &amp; Web Content Creator<br>Aidshilfe Schweiz</span>
+        </div>
+        <div class="cv__row">
+          <span class="cv__year">2022<span class="dash">–</span>2024</span>
+          <span class="cv__text">Administrative &amp; Technical Assistant<br>Exactio AG, Basel</span>
+        </div>
+        <div class="cv__row">
+          <span class="cv__year">2022<span class="dash">–</span>2024</span>
+          <span class="cv__text">Foundation Course <span class="br-open">(</span>Teilzeit Vorkurs<span class="slash">/</span>Propädeutikum<span class="br-close">)</span><br>Schule für Gestaltung Basel</span>
+        </div>
+        <div class="cv__row">
+          <span class="cv__year">2019<span class="dash">–</span>2021</span>
+          <span class="cv__text">Digital Support Line Advisor<br>UBS Switzerland AG, Basel</span>
+        </div>
+        <div class="cv__row">
+          <span class="cv__year">2017<span class="dash">–</span>2019</span>
+          <span class="cv__text">Internship<br>UBS Switzerland AG, Basel</span>
+        </div>
+        <div class="cv__row">
+          <span class="cv__year">2017<span class="dash">–</span>2019</span>
+          <span class="cv__text">Banking Entry Program for High School Graduates<br>Swiss Banking Diploma</span>
+        </div>
+        <div class="cv__row">
+          <span class="cv__year">2014<span class="dash">–</span>2018</span>
+          <span class="cv__text">Federal Vocational Baccalaureate &amp; Federal Diploma<br>Business School Basel <span class="br-open">(</span>Wirtschaftsmittelschule Basel<span class="br-close">)</span></span>
+        </div>
+      </div>
+      <address class="contact tab-panel" data-panel="contact">
+        <a href="https://www.instagram.com/fischerpatrick.ch/" target="_blank" rel="noopener">@fischerpatrick.ch</a>
+        <a href="mailto:patrickfischer99@outlook.com">patrickfischer99<wbr>@outlook.com</a>
+        <a href="https://www.linkedin.com/in/patrick-fischer-8238b5209/" target="_blank" rel="noopener">LinkedIn</a>
+      </address>
+      <h1 class="bar__heading"><button class="bar__label" type="button"><span>fischerpatrick<span class="name-dot"></span>ch</span></button></h1>
+    </header>
+
+    <!-- Balken 2–8: Projekte (Ordnernamen aus /Media) -->
+    <!-- Thumbnail: Video wenn vorhanden, sonst Bild. Pfade mit Leerzeichen als %20 -->
+
+    <section class="bar" data-folder="Slaughter House">
+      <div class="bar__media">
+        <!-- Thumbnail: 1:44–1:49, vorwärts und rückwärts (Thumbnail_pingpong.mp4) -->
+        <video src="Media/slaughter-house/Thumbnail_pingpong.mp4" poster="Media/slaughter-house/Thumbnail_poster.jpg" muted loop playsinline preload="metadata"></video>
+      </div>
+      <div class="bar__page" data-gallery="Slaughter House"></div>
+      <button class="bar__label" type="button">Slaughter House</button>
+    </section>
+
+    <section class="bar" data-folder="Thin Hair Setter">
+      <!-- Hintergrund: zufällige Satzzeichen, die der Maus ausweichen (scripts.js) -->
+      <div class="bar__media bar__media--symbols">
+        <canvas class="symbol-field"></canvas>
+      </div>
+      <!-- Seite: Text, Angaben und Knopf «Download Tool» (Inhalt in scripts.js, PAGE_CONTENT) -->
+      <div class="bar__page" data-gallery="Thin Hair Setter"></div>
+      <button class="bar__label" type="button">Thin Hair Setter</button>
+    </section>
+
+    <section class="bar" data-folder="Analogue Archive">
+      <div class="bar__media">
+        <!-- Bild wird bei jedem Laden zufällig gewählt, nur aus Unterordner 04 (data-random-sub) -->
+        <img data-random="Analogue Archive" data-random-sub="04" alt="">
+      </div>
+      <!-- Galerie: pro Unterordner eine Bildreihe, wird in scripts.js aufgebaut -->
+      <div class="bar__page" data-gallery="Analogue Archive"></div>
+      <button class="bar__label" type="button">Analogue Archive</button>
+    </section>
+
+    <section class="bar" data-folder="The Touch Within Data">
+      <div class="bar__media">
+        <video src="Media/the-touch-within-data/_web/Thumbnail.mp4" poster="Media/the-touch-within-data/_web/Thumbnail_poster.jpg" muted loop playsinline preload="metadata"></video>
+      </div>
+      <div class="bar__page" data-gallery="The Touch Within Data"></div>
+      <button class="bar__label" type="button">The Touch Within Data</button>
+    </section>
+
+    <section class="bar" data-folder="Neue Scheune Merian Gärten">
+      <div class="bar__media">
+        <video src="Media/neue-scheune-merian-gaerten/Thumbnail_pingpong.mp4" poster="Media/neue-scheune-merian-gaerten/Thumbnail_poster.jpg" muted loop playsinline preload="metadata"></video>
+      </div>
+      <!-- Seite: 3D-Modell der Scheune (Inhalt in scripts.js, PAGE_CONTENT) -->
+      <div class="bar__page" data-gallery="Neue Scheune Merian Gärten"></div>
+      <button class="bar__label" type="button">Neue Scheune Merian Gärten</button>
+    </section>
+
+    <section class="bar" data-folder="LSD – Trip : Therapie">
+      <div class="bar__media">
+        <video src="Media/lsd-trip-therapie/Thumbnail_pingpong.mp4" poster="Media/lsd-trip-therapie/Thumbnail_poster.jpg" muted loop playsinline preload="metadata"></video>
+      </div>
+      <!-- Seite: Vorne/Hinten, Video, Prozess-Galerie (Inhalt in scripts.js, PAGE_CONTENT) -->
+      <div class="bar__page" data-gallery="LSD – Trip : Therapie"></div>
+      <button class="bar__label" type="button"><span>LSD<span class="dash">–</span>Trip<span class="slash">/</span>Therapie</span></button>
+    </section>
+
+    <section class="bar" data-folder="Creative Coding">
+      <div class="bar__media">
+        <video src="Media/creative-coding/_web/2.mp4#t=2" poster="Media/creative-coding/_web/Thumbnail_poster.jpg" muted loop playsinline preload="metadata"></video>
+      </div>
+      <!-- Seite: Galerie mit den Videos 1–4 (Inhalt in scripts.js, PAGE_CONTENT) -->
+      <div class="bar__page" data-gallery="Creative Coding"></div>
+      <!-- angezeigter Name: x·-1 (Ordner heisst weiterhin «Creative Coding») -->
+      <button class="bar__label" type="button">x·-1</button>
+    </section>
+
+  </main>
+
+  <script>window.MEDIA_DIRS = {"Analogue Archive": "analogue-archive", "Creative Coding": "creative-coding", "LSD – Trip : Therapie": "lsd-trip-therapie", "Neue Scheune Merian Gärten": "neue-scheune-merian-gaerten", "Slaughter House": "slaughter-house", "The Touch Within Data": "the-touch-within-data", "Thin Hair Setter": "thin-hair-setter"};</script>
+  <script src="scripts.js"></script>
+  <!-- Handtracking für The Touch Within Data (Hand vor der Kamera spult das Video) -->
+  <script src="handtracking.js"></script>
+</body>
+</html>

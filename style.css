@@ -1,0 +1,1549 @@
+/* ---------- Grundeinstellungen ---------- */
+:root {
+  --bars: 8;                 /* Anzahl Balken */
+  --black: #000;
+  --white: #fff;
+  --font-size: 1.25rem;      /* Schriftgrösse im Normalzustand */
+  --grow: 7;
+  --text-grow: 3.5;          /* wie stark die Projekttitel beim Hovern/Öffnen wachsen (3.5 = 70px) */
+  --grid-col-grow: 2.5;      /* Raster-Test: wie stark die Spalte des aktiven Projekts wächst */                 /* Hover-Faktor: 7 = 600 % grösser */
+  --speed: 0.6s;             /* Dauer der Animationen */
+  --cursor-size: 14px;       /* Grösse des Maus-Quadrats */
+  --loader-dot: 0.7em;       /* Startgrösse des Quadrats im Ladebildschirm */
+  --hover-blur: 12px;        /* Stärke des Weichzeichners beim Hovern (Landingpage) */
+  --text-blur: 3px;          /* Weichzeichner für nicht gewählten Text (Reiter, CV, Contact) */
+  --wave-grow: 3;            /* wie hoch die Welle die Balken aufzieht */
+  --title-top: calc(100% - 100dvh / var(--bars));   /* geöffnet: Titel gleitet an den unteren Rand */
+  --grid-columns: 4;         /* Spalten im Seitenraster (ausser Galerie) */
+  /* Mitte der 1. Rasterspalte, gemessen von der Bildschirmmitte aus
+     (Rand 16px, 4 Spalten mit Abstand --gallery-gap) – für Name und Projekttitel */
+  --col-shift: calc(16px + 0.5 * (100vw - 32px - 3 * var(--gallery-gap)) / 4 - 50vw);
+  --head-h: calc(var(--font-size) * 2);                           /* Kopfzeile mit «+» / «Touch me» */
+  --content-h: calc(100dvh - 2 * 100dvh / var(--bars));            /* Platz zwischen Name oben und Titel unten */
+  --section-gap: 24px;                                            /* Abstand Kopfzeile (+) ↔ Text ↔ Bild/Video */
+  --media-h: calc(var(--content-h) - var(--head-h) - 2 * var(--section-gap));   /* max. Bild-/Videohöhe unter der Kopfzeile (2 Abstände) */
+  --gallery-height: var(--media-h);   /* Höhe der Bilder in der Galerie: so gross wie möglich ohne Überschneidung */
+  --neon: rgb(148, 255, 0);           /* Neongrün (wie das Handskelett) */
+  --gallery-gap: 12px;       /* Abstand zwischen den Bildern */
+
+  /* Beschleunigungskurven – für ALLE Animationen verwenden */
+  --ease: cubic-bezier(0.83, 0, 0.17, 1);          /* langsam los, schnell, sanft abbremsen */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);       /* schnell los, lang auslaufen (folgt dem Scrollen) */
+  --follow: 0.6s;                                  /* Nachlauf beim Scrollen */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--black);  /* Hintergrund der Webseite */
+  color: var(--white);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ---------- Zieharmonika ---------- */
+/* Die ganze Bildschirmfläche wird in 8 gleich hohe Balken geteilt */
+.accordion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ---------- Test: Landingpage im Raster, 2 Spalten nebeneinander ---------- */
+/* Gleiche Logik wie die Balken, nur in 2 Richtungen: die Zeile UND die Spalte
+   des aktiven Projekts werden grösser. Die Grössen setzt scripts.js (updateGrid). */
+.accordion--grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  transition: grid-template-columns var(--speed) var(--ease),
+              grid-template-rows var(--speed) var(--ease);
+}
+
+/* Landingpage darf scrollen, sobald mehr Projekte da sind (scripts.js setzt can-scroll) */
+html.can-scroll {
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+html.can-scroll body {
+  height: auto;
+  overflow: visible;
+}
+
+.accordion--grid .bar {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Welle im Raster: Schrift wird so gross wie beim Hovern */
+.accordion--grid:not(.has-open) .bar.is-wave .bar__label {
+  font-size: calc(var(--font-size) * var(--text-grow) * var(--fit, 1));
+}
+
+/* Jeder Balken: volle Breite, Inhalt exakt in der Mitte */
+.bar {
+  position: relative;
+  flex: 1 1 0;               /* alle Balken gleich gross */
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  transition: flex-grow var(--speed) var(--ease);
+}
+
+/* Aktiver Balken (per Hover ODER Scrollen, gesteuert in scripts.js):
+   wird 600 % grösser, die anderen rücken zusammen */
+.accordion:not(.has-open) .bar.is-active {
+  flex-grow: var(--grow);
+}
+
+/* Reset-Welle: Balken wird kurz aufgezogen, nacheinander von oben nach unten */
+.accordion:not(.has-open) .bar.is-wave {
+  flex-grow: var(--wave-grow);
+}
+
+/* Schrift wächst bei der Welle im gleichen Verhältnis wie der Balken */
+.accordion:not(.has-open) .bar.is-wave .bar__label {
+  font-size: calc(var(--font-size) * var(--wave-grow));
+}
+
+/* Schrift wächst im gleichen Verhältnis mit */
+.accordion:not(.has-open) .bar.is-active .bar__label {
+  font-size: calc(var(--font-size) * var(--text-grow) * var(--fit, 1));
+}
+
+/* ---------- Thumbnails ---------- */
+/* Medium füllt den ganzen Balken; man sieht den Ausschnitt aus der Mitte.
+   Wird der Balken grösser, sieht man automatisch mehr vom Bild/Video. */
+.bar__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transition: transform var(--follow) var(--ease-out);
+}
+
+/* Weichzeichner-Ebene über dem Thumbnail (unter dem Text). backdrop-filter
+   statt filter: so bleiben die Ränder sauber, ohne weissen Schleier */
+.bar__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+  transition: backdrop-filter var(--speed) var(--ease), -webkit-backdrop-filter var(--speed) var(--ease);
+  pointer-events: none;
+}
+
+/* Landingpage: Hovert die Maus ein Projekt, werden die Thumbnails der anderen
+   Balken weichgezeichnet – Text bleibt scharf (liegt auf eigener Ebene) */
+.accordion.is-hovering:not(.has-open) .bar:not(.is-active) .bar__media::after,
+.accordion.is-waving:not(.has-open) .bar:not(.is-wave) .bar__media::after {
+  -webkit-backdrop-filter: blur(var(--hover-blur));
+  backdrop-filter: blur(var(--hover-blur));
+}
+
+.bar__media img,
+.bar__media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Thin Hair Setter: schwarzer Hintergrund mit Satzzeichen-Feld */
+.bar__media--symbols {
+  background: var(--black);
+}
+
+.symbol-field {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Beschriftung ---------- */
+.bar__label {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  white-space: nowrap;
+  font: inherit;
+  font-size: var(--font-size);
+  font-weight: 400;
+  line-height: 1;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: font-size var(--speed) var(--ease);
+}
+
+/* Projekt-Titel invertieren das Bild/Video dahinter
+   (weiss + difference: auf Hell wird die Schrift dunkel, auf Dunkel hell) */
+.bar[data-folder] .bar__label {
+  color: var(--white);
+  mix-blend-mode: difference;
+}
+
+/* Oberster Balken: schwarz, weisse Schrift, nicht sticky – öffnet sich wie die Projekte */
+.bar--title {
+  background: var(--black);
+  color: var(--white);
+  transition: flex-grow var(--speed) var(--ease), background-color var(--speed) var(--ease);
+}
+
+/* Sobald ein Projekt offen ist: fischerpatrick.ch ohne schwarzen Hintergrund,
+   liegt über dem Projekt und invertiert, was darunter ist */
+.accordion.has-open .bar--title:not(.is-open) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  background-color: transparent;
+  mix-blend-mode: difference;
+}
+
+/* Name im geöffneten Projekt: mittig in der 1. Rasterspalte statt Bildschirmmitte */
+.accordion.has-open .bar--title:not(.is-open) .bar__label {
+  translate: var(--col-shift) 0;
+}
+
+/* Im geöffneten Projekt liegt der Namensbalken über der ganzen Breite –
+   nur der Name selbst soll klickbar sein, nicht der leere Rest des Balkens
+   (sonst wären darunterliegende Knöpfe wie das «+» der Galerie blockiert) */
+.accordion.has-open .bar--title:not(.is-open),
+.accordion.has-open .bar--title:not(.is-open) .bar__label {
+  pointer-events: none;
+}
+
+.accordion.has-open .bar--title:not(.is-open) .bar__label > span {
+  pointer-events: auto;
+}
+
+/* Name als eigene Ebene: gleitet flüssig, auch wenn der Browser gerade viel zu tun hat */
+.bar--title .bar__label {
+  will-change: transform;
+}
+
+/* Raster-Modus: Namensbalken im geöffneten Projekt ein Achtel hoch und über die
+   ganze Breite. Feste Rasterzelle aufheben – sonst bezieht sich der Balken (z. B.
+   in Safari) auf seine Zelle, die beim Öffnen auf 0 schrumpft, und verschwindet. */
+.accordion--grid.has-open .bar--title:not(.is-open) {
+  grid-row: auto !important;
+  grid-column: auto !important;
+  height: calc(100dvh / var(--bars));
+}
+
+/* fischerpatrick.ch-Seite: Titel bleibt oben stehen */
+.bar--title {
+  --title-top: 0;            /* eigene Seite: Name bleibt oben */
+}
+
+/* ---------- fischerpatrick.ch-Seite: Reiter About / CV / Contact ---------- */
+/* Reiter oben in der Namenszeile, Spalten 2–4. Kommen im gleichen Zug herein,
+   in dem der Name nach oben gleitet (gleiche Verzögerung, Dauer, Kurve). */
+.tabs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;                /* über dem Namensknopf, damit klickbar */
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  align-items: center;
+  height: calc(100dvh / var(--bars));
+  padding: 0 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--speed) var(--ease);
+}
+
+.bar--title.is-open:not(.is-closing) .tabs {
+  opacity: 1;
+  transition: opacity 0.9s var(--ease) 1.5s;
+}
+
+.tab {
+  justify-self: center;
+  font: inherit;
+  font-size: var(--font-size);
+  line-height: 1;
+  color: var(--white);
+  background: none;
+  border: none;
+  pointer-events: none;
+}
+
+.tab:nth-child(1) { grid-column: 2; }
+.tab:nth-child(2) { grid-column: 3; }
+.tab:nth-child(3) { grid-column: 4; }
+
+.bar--title.is-open:not(.is-closing) .tab {
+  pointer-events: auto;
+}
+
+/* Inhalte der Reiter: erscheinen erst, wenn ein Reiter gewählt ist */
+.tab-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  align-content: center;
+  padding: 0 16px;
+  font-style: normal;
+  font-size: var(--font-size);
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(2vh);
+  pointer-events: none;
+  transition: opacity var(--speed) var(--ease), transform var(--speed) var(--ease);
+}
+
+.bar--title.is-open:not(.is-closing)[data-tab="about"] .tab-panel[data-panel="about"],
+.bar--title.is-open:not(.is-closing)[data-tab="cv"] .tab-panel[data-panel="cv"],
+.bar--title.is-open:not(.is-closing)[data-tab="contact"] .tab-panel[data-panel="contact"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Contact: Spalte 1 bleibt frei – Instagram, Mail, LinkedIn mittig in Spalte 2, 3, 4 */
+.contact {
+  justify-items: center;
+  text-align: center;
+}
+
+.contact > :nth-child(1) { grid-column: 2; }
+.contact > :nth-child(2) { grid-column: 3; }
+.contact > :nth-child(3) { grid-column: 4; }
+
+/* CV: Jahr links in Spalte 1, Eintrag ab Spalte 2 */
+.cv {
+  row-gap: 0.65em;           /* Abstand zwischen den Einträgen (halbe Zeile) */
+  line-height: 1.3;
+}
+
+/* Jede CV-Zeile nutzt das Raster der Seite weiter (subgrid), damit man sie als Ganzes hovern kann */
+.cv__row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
+/* ---------- Weichzeichner für Text: Fokus auf das, was gewählt/gehovert ist ---------- */
+.tab,
+.cv__row,
+.contact a {
+  transition: filter var(--speed) var(--ease), opacity var(--speed) var(--ease);
+}
+
+/* Reiter: ist einer gewählt (oder wird einer gehovert), werden die anderen unscharf.
+   fischerpatrick.ch bleibt immer scharf. */
+.bar--title[data-tab] .tab:not(.is-active):not(:hover) {
+  filter: blur(var(--text-blur));
+}
+
+/* Hover-Effekte nur mit echter Maus (auf Handy/Tablet nur per Tippen) */
+@media (hover: hover) and (pointer: fine) {
+  .tabs:has(.tab:hover) .tab:not(:hover) {
+    filter: blur(var(--text-blur));
+  }
+}
+
+/* Nur der Text selbst (Jahr und Eintrag) reagiert auf die Maus,
+   nicht die leere Fläche der Zeile daneben */
+.bar--title.is-open:not(.is-closing)[data-tab="cv"] .cv__year,
+.bar--title.is-open:not(.is-closing)[data-tab="cv"] .cv__text {
+  pointer-events: auto;
+}
+
+/* CV: Zeile unter der Maus scharf, der Rest unscharf (nur mit Maus) */
+@media (hover: hover) and (pointer: fine) {
+  .cv:has(.cv__row:hover) .cv__row:not(:hover) {
+    filter: blur(var(--text-blur));
+  }
+
+  /* Contact: Link unter der Maus scharf, die anderen unscharf */
+  .contact:has(a:hover) a:not(:hover) {
+    filter: blur(var(--text-blur));
+  }
+}
+
+/* CV in den rechten 3/4: Jahr in Spalte 2, Eintrag in Spalten 3–4 */
+.cv__year {
+  grid-column: 2;
+  justify-self: center;      /* mittig in der Spalte, unter «About» */
+  align-self: start;         /* oben bündig mit der ersten Zeile des Eintrags */
+}
+
+/* 1/8 Geviert Abstand: um den Halbgeviertstrich, um «/» und innen an den Klammern */
+.dash,
+.slash {
+  margin: 0 0.125em;
+}
+
+.br-open {
+  margin-right: 0.125em;
+}
+
+.br-close {
+  margin-left: 0.125em;
+}
+
+.cv__text {
+  grid-column: 3 / -1;
+  justify-self: start;       /* Fläche nur so breit wie der Text */
+}
+
+/* About / CV: Text über 3/4 der Breite (Spalten 2–4) */
+.tab-panel--text p {
+  grid-column: 2 / -1;
+  font-size: var(--font-size);
+  line-height: 1.3;
+}
+
+/* nur die Links selbst sind klickbar, der Rest lässt Klicks durch */
+.contact a {
+  color: var(--white);
+  text-decoration: none;
+  pointer-events: none;
+}
+
+.bar--title.is-open:not(.is-closing)[data-tab="contact"] .contact a {
+  pointer-events: auto;
+}
+
+/* Überschrift-Hülle um den Namen soll das Layout nicht beeinflussen */
+.bar__heading {
+  display: contents;
+}
+
+/* ---------- Klick: Projekt öffnet sich komplett ---------- */
+.accordion.has-open .bar {
+  flex-grow: 0;
+}
+
+.accordion.has-open .bar.is-open {
+  flex-grow: 1;
+}
+
+/* Weisse Seite: wartet unterhalb des Bildschirms und wird hochgescrollt */
+.bar__page {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  min-height: 100%;          /* mindestens ein Bildschirm, mit Inhalt auch länger */
+  background: var(--black);
+  color: var(--white);
+  transition: transform var(--follow) var(--ease-out);
+}
+
+.bar:not(.is-open) .bar__page {
+  display: none;
+}
+
+/* ---------- Galerie (z. B. Analogue Archive) ---------- */
+/* Jeder Unterordner = ein Bildschirm hoch, darin eine Bildreihe,
+   die über den Rand hinausläuft und sich von rechts nach links bewegt */
+.gallery__section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--section-gap);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: calc(100dvh / var(--bars)) 0;   /* oben/unten frei für Name und Projekttitel */
+  overflow-x: clip;                        /* Laufband seitlich abschneiden */
+  overflow-y: visible;                     /* mit aufgeklapptem Text darf es höher werden */
+}
+
+/* Titel der Galerie (z. B. Nummer bei Analogue Archive): mittig in Spalte 2 */
+.gallery__caption {
+  grid-row: 1;               /* immer in der Kopfzeile, auch neben einem Knopf */
+  grid-column: 2;
+  justify-self: center;
+  font-size: var(--font-size);
+  line-height: 1;
+}
+
+/* Kopfzeile der Galerie im 4er-Raster */
+.gallery__head {
+  position: relative;
+  z-index: 3;                /* über dem Textfeld, damit «+» klickbar bleibt */
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  align-items: center;
+  min-height: var(--head-h);
+  padding: 0 16px;
+}
+
+/* «+» mittig in der rechten Spalte; wird beim Öffnen zum «−» */
+.gallery__plus {
+  grid-row: 1;               /* immer auf der Höhe der Kopfzeile */
+  grid-column: var(--grid-columns);
+  justify-self: center;
+  font: inherit;
+  font-size: calc(var(--font-size) * 1.6);   /* bewusst grösser als der Text */
+  line-height: 1;
+  color: var(--white);
+  background: none;
+  border: none;
+}
+
+/* Text oberhalb der Galerie: klappt weich auf (Höhe 0 → Inhalt), Spalten 2–4 */
+.gallery__info {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-bottom: 0;
+  transition: grid-template-rows var(--speed) var(--ease), margin-bottom var(--speed) var(--ease);
+}
+
+/* aufgeklappt: unter dem Text gleich viel Luft wie zwischen «+» und Bild (zusätzlicher Abstand) */
+.gallery__section.show-info .gallery__info {
+  margin-bottom: var(--section-gap);
+}
+
+.gallery__section.show-info .gallery__info {
+  grid-template-rows: 1fr;
+}
+
+.gallery__info-inner {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  padding: 0 16px;
+}
+
+.gallery__info p {
+  grid-column: 3 / -1;       /* Text über 2 Spalten (3–4) */
+  font-size: var(--font-size);
+  line-height: 1.3;
+  opacity: 0;
+  transition: opacity var(--speed) var(--ease);
+}
+
+.gallery__section.show-info .gallery__info p {
+  opacity: 1;
+}
+
+/* Angaben unter dem Text (Titel, Jahr, Format …): gleiche Spalten, eine Leerzeile Abstand,
+   Zeilenumbrüche wie eingegeben */
+.gallery__info p.gallery__credits {
+  margin-top: 1.3em;
+  white-space: pre-line;
+}
+
+.gallery__track {
+  display: flex;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;       /* seitwärts ziehen übernimmt die Galerie */
+  gap: var(--gallery-gap);
+  width: max-content;
+  will-change: transform;
+}
+
+.gallery__track img,
+.gallery__track video {
+  display: block;
+  height: var(--gallery-height);
+  width: auto;
+  flex: none;
+  cursor: zoom-in;
+}
+
+.gallery__track.is-dragging,
+.gallery__track.is-dragging img,
+.gallery__track.is-dragging video {
+  cursor: grabbing;
+}
+
+/* ---------- Projektseiten: 4er-Grid (alles ausser der Galerie) ---------- */
+/* 4 gleich breite Spalten mit Rand und Abstand wie die Galerie.
+   Oben und unten bleibt je ein Achtel frei (Name / Projekttitel). */
+.page__section {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), 1fr);
+  column-gap: var(--gallery-gap);
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: calc(100dvh / var(--bars)) 16px;
+}
+
+/* Vorne / Hinten: je 2 Spalten (1–2 und 3–4), so gross wie möglich,
+   aber nie höher als der Platz zwischen Name oben und Titel unten */
+.page__pair img {
+  display: block;
+  grid-column: span 2;
+  justify-self: center;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--content-h);
+  cursor: zoom-in;
+}
+
+/* 3D-Plakat: im 4er-Raster mittig über den Spalten 2–4, so gross wie möglich,
+   aber nie höher als der Platz unter der Kopfzeile (wie die Videos) */
+.grid-poster3d {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  padding: 0 16px;
+}
+
+.poster3d {
+  grid-column: 2 / -1;          /* rechte 3 Spalten (2–4), mittig darin */
+  justify-self: center;
+  width: min(100%, calc(var(--media-h) * 4961 / 7016));
+  aspect-ratio: 4961 / 7016;
+  perspective: 2600px;
+  touch-action: pan-y;          /* auf dem Handy: hoch/runter scrollt, seitlich dreht */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.poster3d.is-dragging {
+  cursor: grabbing;
+}
+
+.poster3d__card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Bildflächen: von der Rückseite aus gebaut, die Vorderseite ist um 180° gedreht */
+.poster3d__face {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  filter: brightness(var(--light, 1));   /* seitlich gedreht = etwas dunkler */
+  pointer-events: none;
+}
+
+.poster3d__face--front {
+  transform: rotateY(180deg);
+}
+
+/* ungefaltet: ganzes Plakat; beim Falten: 2 × 4 Felder */
+.poster3d__full,
+.poster3d__mover {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.poster3d__mover,
+.poster3d__card.is-folding .poster3d__full {
+  visibility: hidden;
+}
+
+.poster3d__card.is-folding .poster3d__mover {
+  visibility: visible;
+}
+
+.poster3d__half {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.poster3d__half--r {
+  left: 50%;
+  transform-origin: 0 50%;      /* Falz in der Mitte */
+}
+
+/* ein Streifen = 1/4 der Höhe; der nächste hängt unten dran und klappt an der Kante */
+.poster3d__panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 25%;
+  transform-style: preserve-3d;
+  transform-origin: 50% 0;
+}
+
+.poster3d__panel--next {
+  top: 100%;
+  height: 100%;
+}
+
+.poster3d__panel > .poster3d__face {
+  background-size: 200% 400%;
+}
+
+/* 3D-Modell: Zeichenfläche über alle 4 Spalten, so hoch wie die Videos/das Plakat.
+   Das Modell selbst steht mittig über den Spalten 2–3 (scripts.js passt die Distanz an) */
+.grid-model3d {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  padding: 0 16px;
+}
+
+.model3d {
+  grid-column: 1 / -1;
+  height: var(--media-h);
+  touch-action: none;          /* Ziehen dreht, zwei Finger zoomen */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.model3d.is-dragging {
+  cursor: grabbing;
+}
+
+.model3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Video: mittlere 2 Spalten (2–3), passt in die Bildschirmhöhe */
+.page__video {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Videos-Abschnitt: wie eine Galerie-Reihe, aber die Videos stehen still
+   in einem 3er-Raster (je mittig in ihrer Spalte, gleiche Höhe wie die Galeriebilder) */
+/* Ein Video in voller Breite (z. B. Slaughter House) */
+.grid-1 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  padding: 0 16px;
+}
+
+/* Videos und Bilder in den rechten 3 Spalten (2–4), Spalte 1 bleibt frei – wie beim Triptychon */
+.grid-1 > video,
+.grid-1 > img {
+  grid-column: 2 / -1;
+  justify-self: center;
+}
+
+.grid-1 video,
+.grid-1 img {
+  display: block;
+  margin: 0 auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--media-h);
+  cursor: zoom-in;
+}
+
+/* Drei Videos im 4er-Raster: Spalten 2, 3 und 4, Spalte 1 bleibt frei */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gallery-gap);
+  padding: 0 16px;
+}
+
+.grid-3 > video:first-of-type,
+.grid-3 > img:first-of-type {
+  grid-column-start: 2;
+}
+
+/* Fotos im 3er-Raster (z. B. x·-1): so gross wie möglich, gleiche Höhe wie die Videos */
+.grid-3 img {
+  display: block;
+  justify-self: center;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--media-h);
+  cursor: zoom-in;
+}
+
+/* Videos so gross wie möglich: Spaltenbreite, aber nie höher als der Platz
+   zwischen Name oben und Titel unten (ohne Überschneidung) */
+.grid-3 video {
+  display: block;
+  justify-self: center;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--media-h);
+  cursor: zoom-in;
+}
+
+/* Text-Aufklappen wie bei den Galerien */
+.page__videos.show-info .gallery__info {
+  grid-template-rows: 1fr;
+}
+
+.page__videos.show-info .gallery__info p {
+  opacity: 1;
+}
+
+.page__video video {
+  display: block;
+  grid-column: 2 / 4;
+  justify-self: center;
+  max-width: 100%;
+  max-height: calc(100dvh - 2 * 100dvh / var(--bars));
+}
+
+/* ---------- Lightbox: Bild so gross wie möglich ---------- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--black);
+  opacity: 0;
+  pointer-events: none;
+  cursor: zoom-out;
+  transition: opacity var(--speed) var(--ease);
+}
+
+.lightbox.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lightbox__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;       /* ganzes Bild, maximal gross, nichts abgeschnitten */
+  opacity: 0;
+  transform: scale(0.97);
+  transition: opacity var(--speed) var(--ease), transform var(--speed) var(--ease);
+}
+
+.lightbox__img.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Geöffnetes Projekt: Titel bleibt nach der Animation dauerhaft unten stehen
+   (sticky) und liegt über der hochfahrenden Seite – invertiert sie */
+.accordion.has-open .bar.is-open .bar__label {
+  z-index: 3;
+}
+
+.accordion.has-open .bar.is-open .bar__page {
+  z-index: 2;
+}
+
+/* Titel startet gross in der Mitte und wandert nach kurzer Verzögerung
+   nach oben: gleiche Grösse und Position wie ein 1/8-Balken, aber ohne Balken */
+.accordion.has-open .bar.is-open .bar__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  font-size: calc(var(--font-size) * var(--text-grow) * var(--fit, 1));
+  animation: title-to-top 0.9s var(--ease) 1.5s forwards;   /* Dauer, Verzögerung */
+  transition: transform var(--follow) var(--ease-out);              /* weiches Wegscrollen */
+}
+
+/* Schliessen: Titel wird rückwärts wieder gross und mittig */
+.accordion.has-open .bar.is-open.is-closing .bar__label {
+  animation: title-to-center 0.9s var(--ease) forwards;
+}
+
+@keyframes title-to-center {
+  from {
+    translate: var(--col-shift) 0;
+    top: var(--title-top);
+    height: calc(100dvh / var(--bars));
+    font-size: var(--title-small, var(--font-size));
+  }
+  to {
+    translate: 0 0;
+    top: 0;
+    height: 100%;
+    font-size: calc(var(--font-size) * var(--text-grow) * var(--fit, 1));
+  }
+}
+
+@keyframes title-to-top {
+  to {
+    translate: var(--col-shift) 0;   /* in die 1. Rasterspalte */
+    top: var(--title-top);
+    height: calc(100dvh / var(--bars));
+    font-size: var(--title-small, var(--font-size));
+  }
+}
+
+/* ---------- Mauszeiger: invertiertes Quadrat ---------- */
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;             /* über allem, auch über der Lightbox */
+  width: var(--cursor-size);
+  height: var(--cursor-size);
+  margin: calc(var(--cursor-size) / -2) 0 0 calc(var(--cursor-size) / -2);
+  border-radius: 0;           /* quadratisch */
+  background: var(--white);
+  mix-blend-mode: difference; /* invertiert, was darunter liegt */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+  will-change: transform;
+}
+
+.cursor-dot.is-visible {
+  opacity: 1;
+}
+
+/* Normalen Zeiger nur bei echter Maus ausblenden (Touch bleibt unberührt) */
+@media (hover: hover) and (pointer: fine) {
+  *,
+  *::before,
+  *::after {
+    cursor: none !important;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot {
+    display: none;
+  }
+}
+
+/* ---------- Punkt in «fischerpatrick.ch» ---------- */
+/* Ersetzt den Punkt-Buchstaben. Normal ein weisser Punkt; beim Laden und beim
+   Öffnen der fischerpatrick.ch-Seite laufen darin Ausschnitte aus den Projekten. */
+.name-dot {
+  display: inline-block;
+  width: 0.15em;
+  height: 0.15em;
+  margin: 0 0.055em;
+  border-radius: 0;          /* eckig */
+  background-color: currentColor;
+  background-size: cover;
+  background-position: center;
+  vertical-align: baseline;
+}
+
+/* Grössenwechsel des Punkts nur animieren, solange .dot-anim gesetzt ist –
+   sonst würde der Punkt jeder Schriftgrössen-Änderung hinterherhinken und
+   dabei kurz fast unsichtbar klein werden */
+.dot-anim .name-dot {
+  transition: width var(--speed) var(--ease), height var(--speed) var(--ease),
+              margin var(--speed) var(--ease);
+}
+
+/* fischerpatrick.ch-Seite öffnen: Punkt wird zuerst grosses Quadrat, dann wieder Punkt */
+.bar--title.dot-big .name-dot {
+  width: var(--loader-dot);
+  height: var(--loader-dot);
+  margin: 0 0.08em;
+}
+
+/* ---------- Ladebildschirm ---------- */
+/* Übergang zum Raster: das fischerpatrick.ch-Kästchen startet bildschirmfüllend
+   mit grossem Namen (sieht aus wie der Ladebildschirm) und schrumpft dann –
+   dieselbe Logik wie beim Zurückkehren von der fischerpatrick.ch-Seite */
+.accordion.is-intro .bar--title .bar__label,
+.loader__name {
+  font-size: min(calc(var(--font-size) * var(--grow)), 11vw);
+}
+
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 900;              /* über der Seite, unter dem Mauspunkt */
+  display: grid;
+  place-items: center;
+  background: var(--black);
+  color: var(--white);
+  transition: opacity var(--speed) var(--ease);
+}
+
+.loader__name {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Im Ladebildschirm startet der Punkt als grosses Quadrat und schrumpft am
+   Ende auf die normale Punktgrösse */
+.loader .name-dot {
+  width: var(--loader-dot);
+  height: var(--loader-dot);
+  margin: 0 0.08em;
+  transition: width var(--speed) var(--ease), height var(--speed) var(--ease),
+              margin var(--speed) var(--ease);
+}
+
+.loader.is-shrinking .name-dot {
+  width: 0.15em;
+  height: 0.15em;
+  margin: 0 0.055em;
+}
+
+.loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Beim Öffnen eines Projekts den Hover-Weichzeichner sofort weg statt animiert –
+   das gleichzeitige Weichzeichnen mehrerer Kästchen bremst den Browser stark */
+.accordion.has-open .bar__media::after {
+  transition: none;
+}
+
+/* ---------- Handtracking (The Touch Within Data) ---------- */
+/* Knopf «Touch» unten mittig in der Lightbox, nur bei Seiten mit Handtracking */
+.touch-toggle {
+  position: absolute;
+  z-index: 3;
+  display: none;
+  /* Spalte 4, in der untersten Achtel-Zeile – neben dem Video statt darüber,
+     auf der gleichen Linie wie der Projekttitel unten links */
+  left: calc(16px + 3 * ((100vw - 32px - 3 * var(--gallery-gap)) / 4 + var(--gallery-gap))
+        + (100vw - 32px - 3 * var(--gallery-gap)) / 8);
+  top: calc(100dvh - 100dvh / var(--bars) / 2);
+  translate: -50% -50%;
+}
+
+.lightbox.has-touch .touch-toggle {
+  display: block;
+}
+
+/* «Touch me» / «Try me»: runde neongrüne Fläche, weisse Schrift, zittert regelmässig
+   und wird dabei leicht grösser */
+.touch-toggle,
+.touch-grid-toggle,
+.try-toggle {
+  isolation: isolate;
+  padding: 0.5em 1.2em;      /* Höhe = Kopfzeile */
+  font: inherit;
+  font-size: var(--font-size);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--white);
+  background: none;
+  border: none;
+  cursor: pointer;
+  animation: touch-jitter 3.2s infinite;
+}
+
+.touch-toggle::before,
+.touch-grid-toggle::before,
+.try-toggle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;      /* rund */
+  z-index: -1;
+  background: var(--neon);
+  pointer-events: none;
+}
+
+/* aktiv («Stop»): ruhig, weiss gefüllt */
+.touch-toggle.is-active,
+.touch-grid-toggle.is-active,
+.try-toggle.is-active {
+  color: var(--black);
+  animation: none;
+}
+
+.touch-toggle.is-active::before,
+.touch-grid-toggle.is-active::before,
+.try-toggle.is-active::before {
+  background: var(--white);
+}
+
+@keyframes touch-jitter {
+  0%, 84%, 100% { transform: none; }
+  86% { transform: translate(-2px, 1px) rotate(-3deg) scale(1.06); }
+  88% { transform: translate(2px, -1px) rotate(3deg) scale(1.1); }
+  90% { transform: translate(-2px, -1px) rotate(-2deg) scale(1.1); }
+  92% { transform: translate(2px, 1px) rotate(2deg) scale(1.07); }
+  94% { transform: translate(-1px, 0) rotate(-1deg) scale(1.03); }
+}
+
+/* «Try me» (Creative Coding): mittig in Spalte 2 der Kopfzeile, wie «Touch me»,
+   aber weiss gefüllt mit schwarzer Schrift */
+.try-toggle {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  color: var(--black);
+}
+
+.try-toggle::before {
+  background: var(--white);
+}
+
+/* «Scroll» (LSD): gleicher Knopf wie «Try me», aber neongrün mit weisser Schrift wie «Touch me» */
+.scroll-toggle {
+  color: var(--white);
+}
+
+.scroll-toggle::before {
+  background: var(--neon);
+}
+
+/* «Download Tool» ist ein Link, sieht aber aus wie «Try me» */
+a.try-toggle {
+  text-decoration: none;
+}
+
+/* ---------- Ganz unten: vorheriges | nächstes Projekt ---------- */
+/* zwei Hälften im 4er-Raster (Spalten 1–2 und 3–4), ein Achtel hoch,
+   unten bleibt die Achtel-Zeile für den Projekttitel frei.
+   Hovern wie auf der Startseite: die Hälfte wird breiter (und der Balken höher),
+   der Titel wächst auf 70px, das Thumbnail der anderen Hälfte wird weichgezeichnet */
+.page__projectnav {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;   /* Balken wächst beim Hovern nach oben, unten bleibt fix */
+  height: calc(4 * 100dvh / var(--bars));
+  padding: calc(100dvh / var(--bars)) 0;   /* randabfallend wie auf der Startseite */
+}
+
+.project-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 0;                /* Hälften stossen aneinander, wie die Kästchen */
+  height: calc(100dvh / var(--bars));
+  transition: grid-template-columns var(--speed) var(--ease), height var(--speed) var(--ease);
+}
+
+/* Hovern nur mit echter Maus */
+@media (hover: hover) and (pointer: fine) {
+.project-nav:has(.project-nav__item:hover) {
+  height: calc(2 * 100dvh / var(--bars));
+}
+
+.project-nav:has(.project-nav__item:first-child:hover) {
+  grid-template-columns: minmax(0, 2.5fr) minmax(0, 1fr);   /* 2.5 = wie --grid-col-grow */
+}
+
+.project-nav:has(.project-nav__item:last-child:hover) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.5fr);
+}
+}
+
+.project-nav__item {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: var(--black);
+  color: var(--white);
+  font: inherit;
+  cursor: pointer;
+}
+
+.project-nav__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;          /* Ausschnitt, nicht verzerrt */
+  pointer-events: none;
+}
+
+/* Weichzeichner-Ebene über dem Thumbnail (Text bleibt scharf), wie auf der Startseite */
+.project-nav__item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+  transition: backdrop-filter var(--speed) var(--ease), -webkit-backdrop-filter var(--speed) var(--ease);
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+.project-nav:has(.project-nav__item:hover) .project-nav__item:not(:hover)::after {
+  -webkit-backdrop-filter: blur(var(--hover-blur));
+  backdrop-filter: blur(var(--hover-blur));
+}
+}
+
+/* Titel mittig, invertiert wie auf der Startseite; wächst beim Hovern auf 70px */
+.project-nav__label {
+  position: relative;
+  z-index: 1;
+  font-size: var(--font-size);
+  line-height: 1;
+  white-space: nowrap;
+  mix-blend-mode: difference;
+  transition: font-size var(--speed) var(--ease);
+}
+
+.project-nav__item {
+  container-type: inline-size;
+}
+
+/* 70px, aber nie breiter als die Hälfte (lange Titel werden etwas kleiner) */
+@media (hover: hover) and (pointer: fine) {
+.project-nav__item:hover .project-nav__label {
+  font-size: min(calc(var(--font-size) * var(--text-grow)), calc(88cqw / (var(--chars, 10) * 0.55)));
+}
+}
+
+/* Wechsel zum anderen Projekt: die angeklickte Hälfte wächst auf den ganzen Bildschirm */
+.project-switch {
+  position: fixed;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--white);
+  transition: top 0.85s var(--ease), left 0.85s var(--ease), width 0.85s var(--ease),
+              height 0.85s var(--ease), opacity 0.4s var(--ease);
+  pointer-events: none;
+}
+
+.project-switch.is-out {
+  opacity: 0;
+}
+
+.project-switch__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* gleich gross wie der Titel eines frisch geöffneten Projekts */
+.project-switch__label {
+  position: relative;
+  font-size: calc(var(--font-size) * var(--text-grow) * var(--fit, 1));
+  line-height: 1;
+  white-space: nowrap;
+  mix-blend-mode: difference;
+  transition: font-size 0.85s var(--ease);
+}
+
+/* während des Wechsels: keine Übergänge im Raster (alles springt sofort) */
+html.no-anim .accordion,
+html.no-anim .bar,
+html.no-anim .bar__media,
+html.no-anim .bar__page,
+html.no-anim .bar__label {
+  transition: none !important;
+}
+
+/* Sketch im Vollbild (p5.js, Kamera) */
+.sketch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--black);
+}
+
+.sketch-overlay canvas {
+  display: block;
+}
+
+/* Klick irgendwo auf den Bildschirm schliesst den Sketch */
+.sketch-overlay {
+  cursor: pointer;
+}
+
+/* Handskelett über dem Video, Klicks gehen durch */
+.touch-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* «Touch» links in der Kopfzeile der Videos (Triptychon) */
+.touch-grid-toggle {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;      /* mittig in Spalte 2, wie alles im Raster */
+}
+
+/* Zeichenfläche über dem Triptychon */
+.grid-3.has-touch {
+  position: relative;
+}
+
+.grid-3 .touch-canvas {
+  z-index: 1;
+}
+
+/* ---------- Handy (schmale Bildschirme): 2er-Raster statt 4er-Raster ---------- */
+/* Alles richtet sich nach zwei Spalten: Titel und Knöpfe in Spalte 1, «+» in Spalte 2,
+   Bilder/Videos ausserhalb der Galerien über beide Spalten (ganze Breite), Text über
+   beide Spalten. Name und Projekttitel stehen am Anfang von Spalte 1 (links). */
+@media (max-width: 700px) {
+  :root {
+    --font-size: 1.125rem;
+    --grid-columns: 2;
+    --col-shift: 0px;
+    --gallery-height: min(var(--media-h), 55vw);   /* Galerie-Bilder auf dem Handy kleiner */
+  }
+
+  /* Titel brechen nie um (auch nicht während der Animation). Auf der Startseite werden
+     lange Projekttitel stattdessen etwas kleiner, damit sie in ihr Kästchen passen */
+  .bar__label {
+    white-space: nowrap;
+  }
+
+  /* Projekttitel: Schrift bleibt immer gleich gross (die grosse Grösse), kleiner wird er nur
+     über «scale» – das animiert auf dem Handy flüssig, ohne dass die Schrift springt.
+     Der Titel ist genau so breit wie sein Text (--bigw) und steht mittig, auch wenn er
+     breiter ist als sein Kästchen */
+  .bar:not(.bar--title) .bar__label {
+    width: var(--bigw, 100%);
+    max-width: none;
+    justify-self: start;
+    margin-left: calc(50% - var(--bigw, 100%) / 2);
+    text-align: center;
+    font-size: calc(var(--font-size) * var(--text-grow) * var(--fit, 1));
+    scale: var(--s-small, 0.3);
+    transition: scale 0.9s var(--ease);
+  }
+
+  /* Name oben und Projekttitel unten: am Anfang der 1. Spalte. Wie auf dem Computer
+     startet der Titel gross in der Mitte und wandert dann klein nach links */
+  .accordion.has-open .bar--title .bar__label {
+    /* Handy: Name mittig in Spalte 1 (wie auf dem Computer);
+       nur wenn er breiter ist als die Spalte, beginnt er am linken Rand */
+    --col-shift: max(calc(16px + 0.5 * (100vw - 32px - var(--gallery-gap)) / 2 - 50vw),
+                     var(--end-shift, -100vw));
+  }
+
+  /* Handy: geöffnetes Projekt – Titel wandert nach oben rechts, mittig in Spalte 2
+     (gleiche Zeile wie fischerpatrick.ch). Lange Titel werden so klein, dass sie
+     ohne Umbruch in die Spalte passen (wie auf der Startseite) */
+  .accordion.has-open .bar.is-open:not(.bar--title) .bar__label {
+    --title-top: 0px;
+    --col-shift: calc(16px + 0.75 * (100vw - 32px - var(--gallery-gap)) + var(--gallery-gap) - 50vw);
+    --title-small: calc(var(--font-size) * var(--text-grow) * var(--fit, 1));   /* Schrift bleibt gleich */
+    scale: 1;
+    transition: transform var(--follow) var(--ease-out), scale 0.9s var(--ease);
+    animation: title-to-top 0.9s var(--ease) 1.5s forwards,
+               title-shrink-m 0.9s var(--ease) 1.5s forwards;
+  }
+
+  .accordion.has-open .bar.is-open.is-closing:not(.bar--title) .bar__label {
+    animation: title-to-center 0.9s var(--ease) forwards,
+               title-grow-m 0.9s var(--ease) forwards;
+  }
+
+  /* beim Öffnen wächst der Titel weich von der kleinen auf die grosse Grösse
+     (auf dem Computer passiert das schon beim Hovern) */
+  .accordion.has-open .bar.is-open .bar__label {
+    transition: transform var(--follow) var(--ease-out), font-size 0.9s var(--ease);
+  }
+
+  /* Kopfzeile: Titel der Galerie und Knöpfe (Touch me / Try me / Scroll / Download) in Spalte 1,
+     «+» in Spalte 2 */
+  .gallery__caption,
+  .touch-grid-toggle,
+  .try-toggle {
+    grid-column: 1;
+  }
+
+  /* Bilder, Videos, Plakat, 3D-Modell: 2er-Raster, über beide Spalten */
+  .grid-1,
+  .grid-3,
+  .grid-poster3d,
+  .grid-model3d {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--gallery-gap);
+  }
+
+  .grid-1 > video,
+  .grid-1 > img,
+  .grid-3 > video,
+  .grid-3 > img,
+  .poster3d,
+  .model3d {
+    grid-column: 1 / -1 !important;
+    justify-self: center;
+  }
+
+  /* Bilder und Videos (ausser Galerien): querformatige über die Breite des Rasters,
+     hochformatige höchstens 65 % der Bildschirmhöhe (nicht bis an den Rand) */
+  .grid-1 > video,
+  .grid-1 > img,
+  .grid-3 > video,
+  .grid-3 > img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 65dvh;
+  }
+
+  /* Text unter dem «+» über beide Spalten */
+  .gallery__info p {
+    grid-column: 1 / -1;
+  }
+
+  /* Abschnitte nicht mehr bildschirmhoch: weniger Abstand zur nächsten Galerie / zum nächsten
+     Bild. Auch Plakat und 3D-Modell: die Seite bleibt dort nicht mehr stehen */
+  .gallery__section {
+    min-height: 0;
+    padding: calc(100dvh / var(--bars) * 0.5) 0;
+  }
+
+  /* Grossansicht: «Touch me» unten mittig in Spalte 2 */
+  .touch-toggle {
+    left: calc(16px + (100vw - 32px - var(--gallery-gap)) / 2 + var(--gallery-gap)
+          + (100vw - 32px - var(--gallery-gap)) / 4);
+  }
+
+  /* ---------- fischerpatrick.ch-Seite (About / CV / Contact) ---------- */
+  /* 2er-Raster: Name links oben, About rechts oben, Contact links unten, CV rechts unten */
+  .tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: calc(100dvh / var(--bars)) auto;
+    align-content: start;
+    height: auto;
+  }
+
+  .tab:nth-child(1) { grid-column: 2; grid-row: 1; justify-self: center; }
+  .tab:nth-child(2) { grid-column: 2; grid-row: 2; justify-self: center; }
+  .tab:nth-child(3) { grid-column: 1; grid-row: 2; justify-self: center; }
+
+  /* grössere Tippfläche für den Finger */
+  .tab {
+    padding: 0.6em 0;
+  }
+
+  /* kein Weichzeichner und kein Abdunkeln auf dem Handy: Reiter, CV-Zeilen und Links bleiben
+     immer gleich */
+  .bar--title[data-tab] .tab:not(.is-active):not(:hover),
+  .tabs:has(.tab:hover) .tab:not(:hover),
+  .cv:has(.cv__row:hover) .cv__row:not(:hover),
+  .contact:has(a:hover) a:not(:hover) {
+    filter: none;
+  }
+
+  .tab-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    padding-top: calc(100dvh / var(--bars) * 1.9);
+    padding-bottom: 32px;
+    font-size: 1.0625rem;
+    line-height: 1.35;
+  }
+
+  /* CV: etwas kleiner als der übrige Text, aber mit mehr Zeilenabstand */
+  .cv {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    row-gap: 0.9em;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    /* beginnt erst unter den Reitern, damit beim Scrollen nichts über Name und Reiter läuft */
+    top: calc(100dvh / var(--bars) * 1.75);
+    padding-top: 12px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+  }
+
+  /* der CV ist auf dem Handy länger als der Bildschirm: mit dem Finger scrollbar */
+  .bar--title.is-open:not(.is-closing)[data-tab="cv"] .cv {
+    pointer-events: auto;
+  }
+
+  .tab-panel--text p {
+    grid-column: 1 / -1;
+  }
+
+  /* CV: Jahr in Spalte 1, Eintrag in Spalte 2 */
+  .cv__year {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .cv__text {
+    grid-column: 2;
+  }
+
+  /* Contact: Links untereinander, ab Spalte 1 */
+  .contact {
+    justify-items: start;
+    text-align: left;
+    row-gap: 1.4em;
+  }
+
+  .contact > :nth-child(1),
+  .contact > :nth-child(2),
+  .contact > :nth-child(3) {
+    grid-column: 1 / -1;     /* Infos links (ab Spalte 1); Mailadresse ist zu lang für eine Spalte */
+  }
+
+  /* Ladebildschirm auf dem Handy: Name kleiner, das Quadrat mit den Projekten grösser */
+  .accordion.is-intro .bar--title .bar__label,
+  .loader__name {
+    font-size: 6.5vw;
+  }
+
+  .loader {
+    --loader-dot: 4em;
+  }
+}
+
+/* Handy: Projekttitel werden nur über «scale» kleiner/grösser (siehe Handy-Bereich) */
+@keyframes title-shrink-m {
+  from { scale: 1; }
+  to   { scale: var(--s-small, 0.3); }
+}
+
+@keyframes title-grow-m {
+  from { scale: var(--s-small, 0.3); }
+  to   { scale: 1; }
+}
