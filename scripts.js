@@ -219,9 +219,18 @@ let touchLastT = 0;
 let momentumRaf = 0;
 
 let touchOnModel = false;        // Finger bedient ein 3D-Modell → Seite scrollt nicht mit
+let touchOnGallery = false;      // Finger startet auf einer Galerie
+let touchDir = null;             // null | 'x' (Galerie wischen) | 'y' (Seite scrollen)
+let touchX0 = 0;
+let touchY0 = 0;
 
 window.addEventListener('touchstart', (e) => {
   touchOnModel = !!(e.target.closest && e.target.closest('.model3d'));
+  // Galerie: erst entscheiden, ob seitwärts (Galerie) oder hoch/runter (Seite) gewischt wird
+  touchOnGallery = !!(e.target.closest && e.target.closest('.gallery__track'));
+  touchDir = null;
+  touchX0 = e.touches[0].clientX;
+  touchY0 = e.touches[0].clientY;
   touchStartY = e.touches[0].clientY;
   touchVel = 0;
   touchLastT = performance.now();
@@ -241,6 +250,16 @@ window.addEventListener('touchmove', (e) => {
   const delta = touchStartY - y;
   touchStartY = y;
   if (touchOnModel) { touchVel = 0; return; }   // Drehen/Zoomen am 3D-Modell: Seite bleibt stehen
+  // Galerie seitwärts gewischt → Seite bleibt stehen (bis der Finger losgelassen wird)
+  if (touchOnGallery) {
+    if (!touchDir) {
+      const ax = Math.abs(e.touches[0].clientX - touchX0);
+      const ay = Math.abs(y - touchY0);
+      if (ax < 6 && ay < 6) return;               // noch unklar: nichts bewegen
+      touchDir = ax > ay ? 'x' : 'y';
+    }
+    if (touchDir === 'x') { touchVel = 0; return; }
+  }
 
   // Handy: langer CV scrollt in sich selbst (normales Scrollen), erst ganz oben schliesst ein
   // Wisch nach unten die Seite
@@ -2280,6 +2299,7 @@ function nudgeCurrentRow(dx) {
 // ---------- Galerie mit der Maus (oder dem Finger) seitwärts ziehen ----------
 let drag = null;
 let suppressClick = false;
+const GALLERY_TOUCH_FACTOR = 2;   // Handy: so viel stärker folgt die Galerie dem Finger
 
 document.addEventListener('pointerdown', (e) => {
   const track = e.target.closest('.gallery__track');
@@ -2305,8 +2325,8 @@ window.addEventListener('pointermove', (e) => {
   if (drag.pending) {
     const ax = Math.abs(e.clientX - drag.startX);
     const ay = Math.abs(e.clientY - drag.startY);
-    if (ay > 8 && ay > ax) { drag = null; return; }   // senkrecht → Seite scrollen
-    if (ax < 8) return;
+    if (ay > 6 && ay > ax) { drag = null; return; }   // senkrecht → Seite scrollen
+    if (ax < 6) return;
     drag.pending = false;                             // seitwärts → Reihe ziehen
     drag.row.dragging = true;
     drag.row.vel = 0;
@@ -2318,7 +2338,8 @@ window.addEventListener('pointermove', (e) => {
   const dx = e.clientX - drag.lastX;
   const dtime = Math.max(1, now - drag.lastT);
 
-  drag.row.x += dx;
+  // Finger: Galerie bewegt sich stärker als der Finger (reagiert direkter)
+  drag.row.x += dx * (e.pointerType === 'touch' ? GALLERY_TOUCH_FACTOR : 1);
   drag.moved += Math.abs(dx);
   drag.vel = drag.vel * 0.7 + (dx / dtime) * 1000 * 0.3;   // geglättete Geschwindigkeit
   drag.lastX = e.clientX;
